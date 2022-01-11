@@ -1,0 +1,96 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: 'church-hosting
+
+  Sample SAM Template for church-hosting
+
+  '
+Globals:
+  Function:
+    Timeout: 3
+Resources:
+  APIgateway:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: Prod
+      GatewayResponses:
+        UNAUTHORIZED:
+          StatusCode: 401
+          ResponseParameters:
+            Headers:
+              Access-Control-Allow-Origin: '''*'''
+        ACCESS_DENIED:
+          StatusCode: 403
+          ResponseParameters:
+            Headers:
+              Access-Control-Allow-Origin: '''*'''
+        DEFAULT_5XX:
+          StatusCode: 500
+          ResponseParameters:
+            Headers:
+              Access-Control-Allow-Origin: '''*'''
+        RESOURCE_NOT_FOUND:
+          StatusCode: 404
+          ResponseParameters:
+            Headers:
+              Access-Control-Allow-Origin: '''*'''
+      Cors:
+        AllowMethods: '''*'''
+        AllowHeaders: '''*'''
+        AllowOrigin: '''*'''
+      Auth:
+        AddDefaultAuthorizerToCorsPreflight: false
+        Authorizers:
+          MainAuthorizer:
+            UserPoolArn: arn:aws:cognito-idp:us-east-1:315327088521:userpool/us-east-1_194gN8sei
+        DefaultAuthorizer: MainAuthorizer
+  NewSiteFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: NewSiteFunction
+      Handler: app.lambdaHandler
+      Runtime: nodejs14.x
+      Policies:
+      - AmazonS3FullAccess
+      - AmazonDynamoDBFullAccess
+      Architectures:
+      - x86_64
+      Events:
+        HelloWorld:
+          Type: Api
+          Properties:
+            Path: /newsite
+            Method: get
+            RestApiId:
+              Ref: APIgateway
+  EditSiteFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: EditSiteFunction
+      Handler: app.lambdaHandler
+      Runtime: nodejs14.x
+      Policies:
+      - AmazonS3FullAccess
+      - AmazonDynamoDBFullAccess
+      Architectures:
+      - x86_64
+      Events:
+        HelloWorld:
+          Type: Api
+          Properties:
+            Path: /editsite
+            Method: post
+            RestApiId:
+              Ref: APIgateway
+  BucketTable:
+    Type: AWS::Serverless::SimpleTable
+    Properties:
+      TableName: catholichosting-bucket-table
+      PrimaryKey:
+        Type: String
+        Name: bucket
+Outputs:
+  HelloWorldApi:
+    Description: API Gateway endpoint URL for Prod stage for Hello World function
+    Value:
+      Fn::Sub: https://${APIgateway}.execute-api.${AWS::Region}.amazonaws.com/Prod/

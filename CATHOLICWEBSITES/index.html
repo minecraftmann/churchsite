@@ -1,0 +1,108 @@
+<b>CONSOLE OUTPUT</b>
+<p id="out"></p>
+-----
+<br><br>
+
+<b>Create bucket</b><br>
+Bucket Name:<input type="text" id="createBucketName"><br>
+<button type="button" onclick="createBucket()">Create bucket</button>
+<br><br><br><br>
+
+
+<b>Publish</b><br>
+Bucket Name:<input type="text" id="publishBucketName"><br>
+Data:<br><textarea id="publishData"></textarea><br>
+Template:<br><textarea id="publishTemplate"></textarea><br>
+<button type="button" onclick="publishContent()">Publish content</button>
+
+<br><br><br>
+<a href="https://churchwebsites.auth.us-east-1.amazoncognito.com/login?client_id=34lo4oa1gks5pbesnkdq1mu6ao&response_type=token&scope=email+openid&redirect_uri=http%3A%2F%2Flocalhost"> Login </a>
+<a href="https://churchwebsites.auth.us-east-1.amazoncognito.com/logout?client_id=34lo4oa1gks5pbesnkdq1mu6ao&response_type=token&scope=email+openid&redirect_uri=http%3A%2F%2Flocalhost"> Logout </a>
+
+<script>
+
+  hash = window.location.hash.substr(1).split('&');
+  data = {};
+  for (x in hash){
+    line = hash[x].split('=');
+    data[line[0]] = line[1]
+  }
+  token = 'Bearer ' + data['id_token']
+
+  function createBucket(){
+    var bucketName = document.getElementById('createBucketName').value
+    url = "https://ctn573kdwe.execute-api.us-east-1.amazonaws.com/Prod/newsite"
+    fetch(url, {
+      method: 'get',
+      headers: new Headers({
+        'Authorization': token
+      })
+    })
+    .then(response => response.json())
+    .then(resdata => {
+      document.getElementById("out").innerHTML += JSON.stringify(resdata) + "<br><br>"
+    });
+  }
+
+  function publishContent(){
+    var bucketName = document.getElementById('publishBucketName').value
+    var bucketData = document.getElementById('publishData').value
+    var bucketTemplate = document.getElementById('publishTemplate').value
+    url = "https://ctn573kdwe.execute-api.us-east-1.amazonaws.com/Prod/editsite"
+    fetch(url, {
+      method: 'post',
+      headers: new Headers({
+        'Authorization': token,
+        'Content-Type': 'application/json'
+      }),
+      body: JSON.stringify({
+        data : bucketData,
+        template: bucketTemplate
+      })
+    })
+    .then(response => response.json())
+    .then(resdata => {
+      // TODO html needs escaping
+      document.getElementById("out").innerHTML += JSON.stringify(resdata) + "<br><br>"
+    });
+  }
+
+  function makereq(endpoint, method){
+    //church api
+    url = "https://ctn573kdwe.execute-api.us-east-1.amazonaws.com/Prod/"+endpoint
+    fetch(url, {
+      method: method,
+      headers: new Headers({
+        'Authorization': token,
+        'Content-Type': 'application/json'
+      }),
+      body: JSON.stringify({
+        data : {
+          name: 'hidden gem',
+          masstime: '11am and 7pm'
+        },
+        template: "welcome to {{name}}. we have mass at {{masstime}}"
+      })
+    })
+    .then(response => response.json())
+    .then(resdata => {
+      document.getElementById("out").innerHTML += JSON.stringify(resdata) + "<br><br>"
+    });
+  }
+
+
+
+
+  //makereq("editsite", "POST")
+</script>
+
+
+<style>
+  textarea{
+    width: 100%;
+    max-width: 100%;
+    min-width: 100%;
+    height: 200px;
+    min-height: 200px
+  }
+</style>
